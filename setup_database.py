@@ -3,14 +3,14 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
 
-# Configuração do banco
-DATABASE_URL = "sqlite:///banco.db"
+# Pegar string de conexão do ambiente
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///banco.db")
 
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
-# Definir a tabela de hotéis
 class Hotel(Base):
     __tablename__ = "hotels"
 
@@ -18,8 +18,8 @@ class Hotel(Base):
     name = Column(String, nullable=False)
     city = Column(String, nullable=False)
     price_per_night = Column(Float, nullable=False)
-    rating = Column(Float, nullable=False)  # de 1 a 5
-    availability = Column(Integer, nullable=False)  # número de quartos disponíveis
+    rating = Column(Float, nullable=False)
+    availability = Column(Integer, nullable=False)
 
 # Criar tabelas
 Base.metadata.create_all(engine)
@@ -40,6 +40,10 @@ hotels_data = [
 Session = sessionmaker(bind=engine)
 session = Session()
 
+# Limpar dados antigos (opcional)
+session.execute(Hotel.__table__.delete())
+session.commit()
+
 for hotel_data in hotels_data:
     hotel = Hotel(**hotel_data)
     session.add(hotel)
@@ -48,4 +52,4 @@ session.commit()
 session.close()
 
 print("Banco de dados criado com sucesso!")
-print("Arquivo: banco.db")
+print(f"Usando banco: {DATABASE_URL}")

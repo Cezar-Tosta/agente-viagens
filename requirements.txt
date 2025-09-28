@@ -3,4 +3,9 @@ uvicorn[standard]
 crewai
 crewai-tools
 python-dotenv
+sqlalchemy
+psycopg2-binary
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
 weasyprint
