@@ -18,6 +18,28 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.get("/test_db", summary="Testa a conexão com o banco de dados")
+def test_db():
+    from sqlalchemy import create_engine, text
+    import os
+
+    DATABASE_URL = os.getenv("DATABASE_URL")
+
+    if not DATABASE_URL:
+        return {"status": "erro", "mensagem": "DATABASE_URL não definida"}
+
+    try:
+        engine = create_engine(DATABASE_URL)
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT 1"))
+            row = result.fetchone()
+            if row and row[0] == 1:
+                return {"status": "sucesso", "mensagem": "Conexão com o banco de dados bem-sucedida!"}
+            else:
+                return {"status": "erro", "mensagem": "Falha na consulta de teste"}
+    except Exception as e:
+        return {"status": "erro", "mensagem": str(e)}
+
 # Rota para servir o index.html
 @app.get("/", response_class=HTMLResponse)
 def read_root():
