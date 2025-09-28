@@ -69,6 +69,9 @@
             color: #d00;
         }
     </style>
+    <!-- Bibliotecas para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -158,8 +161,6 @@
                     avaliacaoDiv.textContent = data.avaliacao;
                     resultContainer.style.display = 'block';
                     exportBtn.disabled = false; // Habilita o botão de exportar
-                    // Armazena os dados para usar no PDF
-                    window.currentFormData = { dias, orcamento, regiao };
                 } else {
                     errorDiv.textContent = 'Erro: ' + data.mensagem;
                     errorDiv.style.display = 'block';
@@ -173,44 +174,29 @@
             }
         });
 
-        // Botão de exportar PDF
-        document.getElementById('export-pdf-btn').addEventListener('click', async () => {
-            if (!window.currentFormData) {
+        // Botão de exportar PDF (gera localmente)
+        document.getElementById('export-pdf-btn').addEventListener('click', () => {
+            if (!document.getElementById('relatorio').textContent) {
                 alert('Por favor, gere um relatório primeiro.');
                 return;
             }
 
-            const { dias, orcamento, regiao } = window.currentFormData;
+            const { jsPDF } = window.jspdf;
+            const relatorio = document.getElementById('relatorio').textContent;
+            const dias = document.getElementById('dias').value;
+            const orcamento = document.getElementById('orcamento').value;
 
-            try {
-                const response = await fetch('/gerar_pdf', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        dias: parseInt(dias),
-                        orcamento_usd: parseInt(orcamento),
-                        regiao_interesse: regiao
-                    })
-                });
+            const doc = new jsPDF();
+            doc.setFontSize(16);
+            doc.text('Relatório de Viagem Personalizado', 10, 10);
+            doc.setFontSize(12);
+            doc.text(`Itinerário para ${dias} dias com orçamento de US$${orcamento}`, 10, 20);
 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `relatorio_viagem_${dias}dias.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                } else {
-                    alert('Erro ao gerar PDF.');
-                }
-            } catch (error) {
-                alert('Erro de conexão ao gerar PDF: ' + error.message);
-            }
+            // Adiciona o conteúdo do relatório (com quebra de linha)
+            const lines = doc.splitTextToSize(relatorio, 180);
+            doc.text(lines, 10, 30);
+
+            doc.save(`relatorio_viagem_${dias}dias.pdf`);
         });
     </script>
 
