@@ -120,4 +120,33 @@ def criar_tarefas_viagem(dias: int = 7, orcamento: int = 2000, regiao: str = "in
         agent=avaliador_viagem
     )
 
-    return [t1, t2, t3, t4]
+    t5 = Task(
+    description=(
+        "Considerando o relatório escrito pelo Escritor de Viagens, acesse a pasta do Google Drive com ID '1C3-j4_TmAy2sxLFb6CdklzWDOnRpxcbW' e leia os documentos para complementar o relatório final. Utilize somente informações relevantes e coerentes com o contexto no país de viagem."
+    ),
+    expected_output="""O relatório foca em tais pontos...
+    Com base nisso é importante mencionar que... 
+    Se não houver nada relacionado, escrever "Nada a complementar.
+    Mencione os arquivos consultados.""",
+    agent=pesquisador_dados
+)
+
+    t6 = Task(
+        description=(
+            "Consulte o banco de dados para encontrar informações relacionadas ao Relatório gerado pelo Escritor de Viagens"
+            "Cite as informações que possam ser úteis de acordo com o Relatório da Viagem"
+        ),
+        expected_output="Comentários extras com base no Banco de Dados. Esses comentários devem ter pertinência e serem sucintos. Resuma as informações analisadas no banco de dados. Cite o nome das tabelas consultadas no banco de dados.",
+        agent=pesquisador_db
+)
+
+    print("""\nTarefas criadas com sucesso:
+        - Pesquisar Destinos;
+        - Planejar Itinerário;
+        - Escrever Relatório;
+        - Avaliar Relatório;
+        - Pesquisar Dados no Drive; e
+        - Pesquisar no Banco de Dados.
+        """)
+
+    return [t1, t2, t3, t4, t5, t6]
