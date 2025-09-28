@@ -2,12 +2,15 @@ from crewai import Agent
 from dotenv import load_dotenv
 from crewai_tools import SerperDevTool
 from tools.currency_converter_tool import CurrencyConverterTool
+from tools.drive_reader_tool import DriveReaderTool
 
 load_dotenv()  # Carrega as variáveis do .env
 
 # Ferramentas
 search_tool = SerperDevTool()
 currency_tool = CurrencyConverterTool()
+# Ferramenta para ler arquivos do Drive
+drive_tool = DriveReaderTool()
 
 # Agentes
 pesquisador_viagem = Agent(
@@ -40,10 +43,19 @@ avaliador_viagem = Agent(
     verbose=True
 )
 
+pesquisador_dados = Agent(
+    role="Pesquisador de Dados de Viagem",
+    goal="Buscar informações relevantes em documentos do Google Drive para enriquecer o relatório de viagem",
+    backstory="Você tem acesso a uma pasta do Google Drive com avaliações, dicas e informações de viagens anteriores.",
+    tools=[drive_tool],
+    verbose=True
+)
+
 # Só imprime os agentes se este arquivo for executado diretamente
 if __name__ == "__main__":
     print(f"""Agentes criados com sucesso:
     - {pesquisador_viagem.role};
     - {planejador_roteiros.role}; 
-    - {escritor_viagens.role}; e
-    - {avaliador_viagem.role}.""")
+    - {escritor_viagens.role};
+    - {avaliador_viagem.role}; e
+    - {pesquisador_dados.role}""")
