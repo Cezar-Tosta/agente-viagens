@@ -1,5 +1,5 @@
 from crewai import Task
-from travel_agents import pesquisador_viagem, planejador_roteiros, escritor_viagens, avaliador_viagem, pesquisador_dados
+from travel_agents import pesquisador_viagem, planejador_roteiros, escritor_viagens, avaliador_viagem, pesquisador_dados, pesquisador_db
 
 # =============== TAREFAS ESTÁTICAS (para testes locais) ===============
 pesquisar_destinos = Task(
@@ -64,12 +64,23 @@ pesquisar_dados_drive = Task(
     agent=pesquisador_dados
 )
 
+pesquisar_dados_db = Task(
+    description=(
+        "Consulte o banco de dados para encontrar informações relacionadas ao Relatório gerado pelo Escritor de Viagens"
+        "Cite as informações que possam ser úteis de acordo com o Relatório da Viagem"
+    ),
+    expected_output="Comentários extras com base no Banco de Dados. Esses comentários devem ter pertinência e serem sucintos. Resuma as informações analisadas no banco de dados. Cite o nome das tabelas consultadas no banco de dados.",
+    agent=pesquisador_db
+)
+
 print("""\nTarefas criadas com sucesso:
     - Pesquisar Destinos;
     - Planejar Itinerário;
     - Escrever Relatório;
-    - Avaliar Relatório; e
-    - Pesquisar Dados no Drive""")
+    - Avaliar Relatório;
+    - Pesquisar Dados no Drive; e
+    - Pesquisar no Banco de Dados.
+    """)
 
 # =============== FUNÇÃO PARA TAREFAS DINÂMICAS (para API) ===============
 def criar_tarefas_viagem(dias: int = 7, orcamento: int = 2000, regiao: str = "internacional"):

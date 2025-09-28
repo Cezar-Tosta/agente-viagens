@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from crewai_tools import SerperDevTool
 from tools.currency_converter_tool import CurrencyConverterTool
 from tools.drive_reader_tool import DriveReaderTool
+from tools.database_reader_tool import DatabaseReaderTool
 
 load_dotenv()  # Carrega as variáveis do .env
 
@@ -11,6 +12,8 @@ search_tool = SerperDevTool()
 currency_tool = CurrencyConverterTool()
 # Ferramenta para ler arquivos do Drive
 drive_tool = DriveReaderTool()
+# Ferramenta para ler banco de dados
+db_tool = DatabaseReaderTool()
 
 # Agentes
 pesquisador_viagem = Agent(
@@ -51,11 +54,20 @@ pesquisador_dados = Agent(
     verbose=True
 )
 
+pesquisador_db = Agent(
+    role="Pesquisador de Banco de Dados",
+    goal="Consultar o banco de dados para encontrar informações atualizadas",
+    backstory="Você tem acesso a um banco de dados com informações de interesse para os relatórios de viagens.",
+    tools=[db_tool],
+    verbose=True
+)
+
 # Só imprime os agentes se este arquivo for executado diretamente
 if __name__ == "__main__":
     print(f"""Agentes criados com sucesso:
     - {pesquisador_viagem.role};
     - {planejador_roteiros.role}; 
     - {escritor_viagens.role};
-    - {avaliador_viagem.role}; e
-    - {pesquisador_dados.role}""")
+    - {avaliador_viagem.role};
+    - {pesquisador_dados.role}; e
+    - {pesquisador_db.role}""")
