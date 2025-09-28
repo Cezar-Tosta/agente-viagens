@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Assistente de Viagem Inteligente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        #loading {
+            display: none;
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+        #result-container {
+            margin-top: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .relatorio {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .avaliacao {
+            background-color: #f0f8e8;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background-color: #ffe8e8;
+            padding: 15px;
+            border-radius: 5px;
+            color: #d00;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Assistente de Viagem Inteligente</h1>
+    <form id="travel-form">
+        <div class="form-group">
+            <label for="dias">Dias de viagem:</label>
+            <input type="number" id="dias" value="7" min="1" max="30" required>
+        </div>
+
+        <div class="form-group">
+            <label for="orcamento">Orçamento (USD):</label>
+            <input type="number" id="orcamento" value="2000" min="100" required>
+        </div>
+
+        <div class="form-group">
+            <label for="regiao">Região de interesse:</label>
+            <select id="regiao" required>
+                <option value="internacional">Internacional</option>
+                <option value="Europa">Europa</option>
+                <option value="América do Sul">América do Sul</option>
+                <option value="Ásia">Ásia</option>
+                <option value="Oceania">Oceania</option>
+            </select>
+        </div>
+
+        <button type="submit">Planejar Viagem</button>
+        <button type="button" id="export-pdf-btn" disabled>Exportar PDF</button>
+    </form>
+
+    <div id="loading">Gerando seu relatório de viagem...</div>
+
+    <div id="result-container" style="display: none;">
+        <div id="relatorio-section" class="section">
+            <div class="section-title">📄 Relatório de Viagem</div>
+            <div id="relatorio" class="relatorio"></div>
+        </div>
+
+        <div id="avaliacao-section" class="section">
+            <div class="section-title">🔍 Avaliação de Qualidade</div>
+            <div id="avaliacao" class="avaliacao"></div>
+        </div>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <script>
+        document.getElementById('travel-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const dias = document.getElementById('dias').value;
+            const orcamento = document.getElementById('orcamento').value;
+            const regiao = document.getElementById('regiao').value;
+
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('result-container');
+            const relatorioDiv = document.getElementById('relatorio');
+            const avaliacaoDiv = document.getElementById('avaliacao');
+            const errorDiv = document.getElementById('error');
+            const exportBtn = document.getElementById('export-pdf-btn');
+
+            // Limpa resultados anteriores
+            relatorioDiv.textContent = '';
+            avaliacaoDiv.textContent = '';
+            errorDiv.style.display = 'none';
+            resultContainer.style.display = 'none';
+
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/planejar_viagem', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        dias: parseInt(dias),
+                        orcamento_usd: parseInt(orcamento),
+                        regiao_interesse: regiao
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'sucesso') {
+                    relatorioDiv.textContent = data.relatorio_viagem;
+                    avaliacaoDiv.textContent = data.avaliacao;
+                    resultContainer.style.display = 'block';
+                    exportBtn.disabled = false; // Habilita o botão de exportar
+                    // Armazena os dados para usar no PDF
+                    window.currentFormData = { dias, orcamento, regiao };
+                } else {
+                    errorDiv.textContent = 'Erro: ' + data.mensagem;
+                    errorDiv.style.display = 'block';
+                }
+
+            } catch (error) {
+                errorDiv.textContent = 'Erro de conexão: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // Botão de exportar PDF
+        document.getElementById('export-pdf-btn').addEventListener('click', async () => {
+            if (!window.currentFormData) {
+                alert('Por favor, gere um relatório primeiro.');
+                return;
+            }
+
+            const { dias, orcamento, regiao } = window.currentFormData;
+
+            try {
+                const response = await fetch('/gerar_pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        dias: parseInt(dias),
+                        orcamento_usd: parseInt(orcamento),
+                        regiao_interesse: regiao
+                    })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `relatorio_viagem_${dias}dias.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('Erro ao gerar PDF.');
+                }
+            } catch (error) {
+                alert('Erro de conexão ao gerar PDF: ' + error.message);
+            }
+        });
+    </script>
+
+</body>
+</html>
